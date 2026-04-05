@@ -1,0 +1,7 @@
+@import '@mantine/core/styles.css';
+@import '@mantine/notifications/styles.css';
+@import '@mantine/charts/styles.css';
+
+body {
+  margin: 0;
+}
