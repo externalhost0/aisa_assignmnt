@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from sqlalchemy import case
 from sqlalchemy.orm import Session
 from database import get_db
 import models
@@ -80,8 +81,10 @@ def list_incidents(
         query = query.filter(models.Incident.priority == priority)
 
     return query.order_by(
+        case((models.Incident.pinned_at.is_(None), 1), else_=0),  # pinned rows first
+        models.Incident.pinned_at.asc(),                           # earliest pin = top of queue
         models.Incident.priority.asc(),
-        models.Incident.created_at.desc()
+        models.Incident.created_at.desc(),
     ).all()
 
 
@@ -116,6 +119,9 @@ def update_incident(
 ):
     incident = _get_or_404(db, incident_id)
     patch_data = body.model_dump(exclude_unset=True)
+    if "pinned" in patch_data:
+        pinned = patch_data.pop("pinned")
+        patch_data["pinned_at"] = datetime.now(timezone.utc) if pinned else None
     for field, value in patch_data.items():
         setattr(incident, field, value)
     incident.updated_at = datetime.now(timezone.utc)

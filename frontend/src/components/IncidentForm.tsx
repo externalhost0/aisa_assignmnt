@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import {
   Textarea, Button, Group, Stack, Paper, Text, TextInput,
-  Select, Alert, Loader, Badge,
+  Select, Alert, Loader, Anchor,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { AlertTriangle, Sparkles } from 'lucide-react'
+import { AlertTriangle, Sparkles, PenLine } from 'lucide-react'
 import { api } from '../api/client'
 import { PriorityBadge } from './PriorityBadge'
 import type { ClassifyResponse, Priority, IncidentType } from '../types/incident'
@@ -33,12 +33,21 @@ export function IncidentForm({ campusId, onSaved }: Props) {
   const [classifying, setClassifying] = useState(false)
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState<ClassifyResponse | null>(null)
+  const [manualOpen, setManualOpen] = useState(false)
 
-  // Editable fields after classification
+  // Editable fields after AI classification
   const [editType, setEditType] = useState<string>('')
   const [editPriority, setEditPriority] = useState<string>('')
   const [editLocation, setEditLocation] = useState('')
   const [editPeople, setEditPeople] = useState('')
+
+  // Manual form fields
+  const [manualDescription, setManualDescription] = useState('')
+  const [manualType, setManualType] = useState<string>('')
+  const [manualPriority, setManualPriority] = useState<string>('')
+  const [manualLocation, setManualLocation] = useState('')
+  const [manualPeople, setManualPeople] = useState('')
+  const [manualReason, setManualReason] = useState('')
 
   const handleAnalyze = async () => {
     if (description.trim().length < 5) return
@@ -75,6 +84,8 @@ export function IncidentForm({ campusId, onSaved }: Props) {
         people_involved: editPeople || null,
         status: 'open',
         pattern_flag: preview.pattern_flag,
+        notes: null,
+        pinned_at: null,
         ai_classification_raw: preview as unknown as Record<string, unknown>,
       })
       notifications.show({
@@ -82,7 +93,6 @@ export function IncidentForm({ campusId, onSaved }: Props) {
         title: 'Incident saved',
         message: `${editType} incident logged as ${editPriority === '1' ? 'High' : editPriority === '2' ? 'Medium' : 'Low'} priority`,
       })
-      // Reset form
       setDescription('')
       setPreview(null)
       setEditType('')
@@ -101,8 +111,53 @@ export function IncidentForm({ campusId, onSaved }: Props) {
     }
   }
 
+  const handleManualSave = async () => {
+    if (!manualDescription.trim() || !manualType || !manualPriority) return
+    setSaving(true)
+    try {
+      await api.createIncident({
+        campus_id: campusId,
+        raw_description: manualDescription.trim(),
+        type: manualType as IncidentType,
+        priority: parseInt(manualPriority) as Priority,
+        priority_reason: manualReason.trim() || 'Manually logged',
+        location: manualLocation || null,
+        people_involved: manualPeople || null,
+        status: 'open',
+        pattern_flag: null,
+        notes: null,
+        pinned_at: null,
+        ai_classification_raw: null,
+      })
+      notifications.show({
+        color: 'green',
+        title: 'Incident saved',
+        message: `${manualType} incident logged manually`,
+      })
+      setManualDescription('')
+      setManualType('')
+      setManualPriority('')
+      setManualLocation('')
+      setManualPeople('')
+      setManualReason('')
+      setManualOpen(false)
+      onSaved()
+    } catch {
+      notifications.show({
+        color: 'red',
+        title: 'Save failed',
+        message: 'Could not save the incident. Please try again.',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const manualValid = manualDescription.trim().length >= 5 && !!manualType && !!manualPriority
+
   return (
     <Stack gap="md">
+      {/* ── AI flow ── */}
       <Textarea
         label="Incident Description"
         description="Describe what's happening in plain language. AI will classify and prioritize it."
@@ -178,6 +233,95 @@ export function IncidentForm({ campusId, onSaved }: Props) {
               </Button>
               <Button variant="subtle" color="gray" onClick={() => setPreview(null)} disabled={saving}>
                 Re-analyze
+              </Button>
+            </Group>
+          </Stack>
+        </Paper>
+      )}
+
+      {/* ── Manual entry (secondary) ── */}
+      <Group gap={4}>
+        <Text size="xs" c="dimmed">AI unavailable or prefer manual entry?</Text>
+        <Anchor
+          size="xs"
+          c="dimmed"
+          style={{ textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={() => setManualOpen(o => !o)}
+        >
+          <Group gap={4} component="span">
+            <PenLine size={11} />
+            {manualOpen ? 'Hide manual form' : 'Fill out manually'}
+          </Group>
+        </Anchor>
+      </Group>
+
+      {manualOpen && (
+        <Paper withBorder p="md" radius="md" style={{ borderStyle: 'dashed' }}>
+          <Stack gap="sm">
+            <Text size="sm" fw={500} c="dimmed">Manual Incident Report</Text>
+
+            <Textarea
+              label="Description"
+              placeholder="Describe the incident"
+              minRows={3}
+              value={manualDescription}
+              onChange={e => setManualDescription(e.currentTarget.value)}
+              disabled={saving}
+            />
+
+            <Group grow>
+              <Select
+                label="Type"
+                placeholder="Select type"
+                data={TYPE_OPTIONS}
+                value={manualType}
+                onChange={v => setManualType(v ?? '')}
+                disabled={saving}
+              />
+              <Select
+                label="Priority"
+                placeholder="Select priority"
+                data={PRIORITY_OPTIONS}
+                value={manualPriority}
+                onChange={v => setManualPriority(v ?? '')}
+                disabled={saving}
+              />
+            </Group>
+
+            <Group grow>
+              <TextInput
+                label="Location"
+                placeholder="Building / area"
+                value={manualLocation}
+                onChange={e => setManualLocation(e.currentTarget.value)}
+                disabled={saving}
+              />
+              <TextInput
+                label="People Involved"
+                placeholder="Description of people"
+                value={manualPeople}
+                onChange={e => setManualPeople(e.currentTarget.value)}
+                disabled={saving}
+              />
+            </Group>
+
+            <TextInput
+              label="Priority Reason"
+              placeholder="Why this priority level? (optional)"
+              value={manualReason}
+              onChange={e => setManualReason(e.currentTarget.value)}
+              disabled={saving}
+            />
+
+            <Group mt="xs">
+              <Button
+                leftSection={<PenLine size={14} />}
+                variant="default"
+                onClick={handleManualSave}
+                loading={saving}
+                disabled={!manualValid || saving}
+              >
+                Save Manually
               </Button>
             </Group>
           </Stack>

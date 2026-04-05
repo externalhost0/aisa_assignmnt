@@ -1,0 +1,42 @@
+<h2>How should inline editing work on the board?</h2>
+<p class="subtitle">A dispatcher needs to fix a wrong type, priority, or location on an existing incident.</p>
+
+<div class="options">
+  <div class="option" data-choice="drawer" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Side Drawer (slide-in panel)</h3>
+      <p>Click anywhere on a row → a panel slides in from the right showing all fields as editable inputs. The board stays visible behind it. Save/Cancel at the bottom of the drawer.</p>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>Plenty of room for all fields</li><li>Board context stays visible</li><li>Natural place for full description + audit trail</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Extra click to open</li><li>Covers part of board</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="modal" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Edit Modal (dialog popup)</h3>
+      <p>A dedicated "Edit" button per row opens a centered modal with all editable fields. Board is blocked until modal is dismissed. Status workflow stays on the row.</p>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>Clear focus — nothing else clickable</li><li>Standard, familiar UX</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Board disappears behind overlay</li><li>Extra button clutters each row</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="expandable-row" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Expandable Row</h3>
+      <p>Click a row → it expands in-place to show editable fields below the summary line. The rest of the board shifts down. No overlay, no navigation away.</p>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>No overlay — full board visible</li><li>Spatially connected to the row</li><li>Fast, no navigation</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Limited vertical space per field</li><li>Board layout shifts when expanded</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Pick one, then let me know in the terminal.</p>

@@ -11,7 +11,7 @@ An AI-augmented incident management dashboard for university campus safety teams
 **Solution:** A three-panel web app:
 
 1. **Intelligent Intake** — dispatcher types a freeform description; Claude classifies it, assigns priority (P1–P3) with a rationale, extracts location and people involved, and flags if it resembles a recent cluster.
-2. **Live Incident Board** — filterable table sorted by priority, with one-click status transitions (open → dispatched → resolved), a stale-P1 alert banner, and CSV export.
+2. **Live Incident Board** — filterable, searchable table (location and description) sorted by priority, with one-click status transitions (open → dispatched → resolved), a stale-P1 alert banner, and CSV export.
 3. **Analytics** — hot-spot locations, incidents-by-hour bar chart, and an on-demand AI shift digest for handoff notes.
 
 Every AI output is editable by the dispatcher before saving. The AI drafts; the human decides.

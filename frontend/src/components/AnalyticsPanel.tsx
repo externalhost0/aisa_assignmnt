@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import {
   Stack, Group, Paper, Text, Button, Loader, Center,
   List, ThemeIcon, Skeleton,
+  useMantineTheme,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { BarChart } from '@mantine/charts'
@@ -9,18 +11,18 @@ import { MapPin, Zap } from 'lucide-react'
 import { api } from '../api/client'
 import type { HotspotEntry, HeatmapCell } from '../types/incident'
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 interface Props {
   campusId: number
 }
 
 export function AnalyticsPanel({ campusId }: Props) {
-  const [hotspots, setHotspots] = useState<HotspotEntry[]>([])
-  const [heatmap, setHeatmap] = useState<HeatmapCell[]>([])
-  const [digest, setDigest] = useState<string | null>(null)
-  const [loadingData, setLoadingData] = useState(true)
-  const [loadingDigest, setLoadingDigest] = useState(false)
+  const [hotspots, setHotspots] = useState<HotspotEntry[]>([]);
+  const [heatmap, setHeatmap] = useState<HeatmapCell[]>([]);
+  const [digest, setDigest] = useState<string | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [loadingDigest, setLoadingDigest] = useState(false);
+  const theme = useMantineTheme();
 
   useEffect(() => {
     setLoadingData(true)
@@ -98,7 +100,20 @@ export function AnalyticsPanel({ campusId }: Props) {
           {loadingDigest ? (
             <Stack gap="xs">{Array(5).fill(0).map((_, i) => <Skeleton key={i} h={16} />)}</Stack>
           ) : digest ? (
-            <Text size="sm" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{digest}</Text>
+            <div style={{ fontSize: 'var(--mantine-font-size-sm)', lineHeight: 1.6 }}>
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => <Text fw={700} size="md" mb={4}>{children}</Text>,
+                  h2: ({ children }) => <Text fw={700} size="sm" mb={4} mt={8}>{children}</Text>,
+                  h3: ({ children }) => <Text fw={600} size="sm" mb={4} mt={6}>{children}</Text>,
+                  p: ({ children }) => <Text size="sm" mb={6}>{children}</Text>,
+                  strong: ({ children }) => <Text component="span" fw={600}>{children}</Text>,
+                  li: ({ children }) => <Text component="li" size="sm" mb={2} style={{ marginLeft: 16 }}>{children}</Text>,
+                }}
+              >
+                {digest}
+              </ReactMarkdown>
+            </div>
           ) : (
             <Text c="dimmed" size="sm">Click Generate to get an AI summary of the last 12 hours.</Text>
           )}
@@ -111,15 +126,17 @@ export function AnalyticsPanel({ campusId }: Props) {
         {loadingData ? (
           <Center h={180}><Loader /></Center>
         ) : (
-          <BarChart
-            h={180}
-            data={hourData}
-            dataKey="hour"
-            series={[{ name: 'incidents', color: 'orange.6' }]}
-            tickLine="none"
-            gridAxis="y"
-            barProps={{ radius: 2 }}
-          />
+          <div style={{ minWidth: 0 }}>
+            <BarChart
+              h={180}
+              data={hourData}
+              dataKey="hour"
+              series={[{ name: 'incidents', color: theme.primaryColor }]}
+              tickLine="none"
+              gridAxis="y"
+              barProps={{ radius: 2 }}
+            />
+          </div>
         )}
       </Paper>
     </Stack>

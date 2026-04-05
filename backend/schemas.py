@@ -50,6 +50,8 @@ class IncidentRead(BaseModel):
     people_involved: Optional[str]
     status: Status
     pattern_flag: Optional[str]
+    notes: Optional[str]
+    pinned_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
 
@@ -62,6 +64,8 @@ class IncidentPatch(BaseModel):
     location: Optional[str] = None
     people_involved: Optional[str] = None
     type: Optional[IncidentType] = None
+    notes: Optional[str] = None
+    pinned: Optional[bool] = None
 
 
 # ── AI ────────────────────────────────────────────────────────────────────────

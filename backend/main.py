@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from sqlalchemy import text
 
 load_dotenv()
 
@@ -22,10 +23,23 @@ def _seed_default_campus():
         db.close()
 
 
+def _migrate():
+    """Apply lightweight schema migrations for SQLite (create_all won't add new columns)."""
+    with engine.connect() as conn:
+        cols = [row[1] for row in conn.execute(text("PRAGMA table_info(incidents)"))]
+        if "notes" not in cols:
+            conn.execute(text("ALTER TABLE incidents ADD COLUMN notes TEXT"))
+            conn.commit()
+        if "pinned_at" not in cols:
+            conn.execute(text("ALTER TABLE incidents ADD COLUMN pinned_at DATETIME"))
+            conn.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _seed_default_campus()
+    _migrate()
     yield
 
 

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import {
   Stack, Group, Select, Text, Alert, Button, Badge,
-  Table, ActionIcon, Tooltip, Loader, Center,
+  Table, ActionIcon, Tooltip, Loader, Center, Switch, Modal, Textarea, TextInput,
 } from '@mantine/core'
+import { Search, X } from 'lucide-react'
+import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { AlertOctagon, Download, CheckCircle, Forward } from 'lucide-react'
+import { AlertOctagon, Download, CheckCircle, Forward, MessageSquare, Pin, PinOff } from 'lucide-react'
 import { api } from '../api/client'
 import { PriorityBadge } from './PriorityBadge'
 import type { Incident, Status, IncidentType } from '../types/incident'
@@ -40,7 +42,16 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<string | null>(null)
   const [filterPriority, setFilterPriority] = useState<string | null>(null)
+  const [showResolved, setShowResolved] = useState(false)
+  const [search, setSearch] = useState('')
   const [updatingId, setUpdatingId] = useState<number | null>(null)
+  const [pinningId, setPinningId] = useState<number | null>(null)
+  const [pendingResolve, setPendingResolve] = useState<Incident | null>(null)
+  const [opened, { open, close }] = useDisclosure(false)
+  const [notesTarget, setNotesTarget] = useState<Incident | null>(null)
+  const [notesText, setNotesText] = useState('')
+  const [savingNotes, setSavingNotes] = useState(false)
+  const [notesOpened, { open: openNotes, close: closeNotes }] = useDisclosure(false)
 
   // Stale P1 alert: open P1 incidents older than 30 min
   const staleP1 = incidents.filter(i =>
@@ -49,16 +60,40 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
     Date.now() - new Date(i.created_at).getTime() > 30 * 60 * 1000
   )
 
+  const searchLower = search.trim().toLowerCase()
   const filtered = incidents.filter(i => {
+    if (!showResolved && i.status === 'resolved') return false
     if (filterStatus && i.status !== filterStatus) return false
     if (filterType && i.type !== filterType) return false
     if (filterPriority && String(i.priority) !== filterPriority) return false
+    if (searchLower) {
+      const inLocation = (i.location ?? '').toLowerCase().includes(searchLower)
+      const inDescription = i.raw_description.toLowerCase().includes(searchLower)
+      if (!inLocation && !inDescription) return false
+    }
     return true
   })
+
+  const handleTogglePin = async (incident: Incident) => {
+    setPinningId(incident.id)
+    try {
+      await api.updateIncident(incident.id, { pinned: !incident.pinned_at })
+      onRefresh()
+    } catch {
+      notifications.show({ color: 'red', message: 'Failed to update pin' })
+    } finally {
+      setPinningId(null)
+    }
+  }
 
   const handleAdvanceStatus = async (incident: Incident) => {
     const next = STATUS_NEXT[incident.status]
     if (!next) return
+    if (next === 'resolved') {
+      setPendingResolve(incident)
+      open()
+      return
+    }
     setUpdatingId(incident.id)
     try {
       await api.updateIncident(incident.id, { status: next })
@@ -70,8 +105,50 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
     }
   }
 
+  const handleConfirmResolve = async () => {
+    if (!pendingResolve) return
+    setUpdatingId(pendingResolve.id)
+    try {
+      await api.updateIncident(pendingResolve.id, { status: 'resolved' })
+      onRefresh()
+      close()
+      setPendingResolve(null)
+    } catch {
+      notifications.show({ color: 'red', message: 'Failed to update status' })
+      close()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleOpenNotes = (incident: Incident) => {
+    setNotesTarget(incident)
+    setNotesText(incident.notes ?? '')
+    openNotes()
+  }
+
+  const handleSaveNotes = async () => {
+    if (!notesTarget) return
+    setSavingNotes(true)
+    try {
+      await api.updateIncident(notesTarget.id, { notes: notesText })
+      onRefresh()
+      closeNotes()
+    } catch {
+      notifications.show({ color: 'red', message: 'Failed to save notes' })
+    } finally {
+      setSavingNotes(false)
+    }
+  }
+
   const rows = filtered.map(inc => (
-    <Table.Tr key={inc.id} style={{ opacity: inc.status === 'resolved' ? 0.6 : 1 }}>
+    <Table.Tr
+      key={inc.id}
+      style={{
+        opacity: inc.status === 'resolved' ? 0.2 : 1,
+        background: inc.pinned_at ? 'var(--mantine-color-orange-light)' : undefined,
+      }}
+    >
       <Table.Td><PriorityBadge priority={inc.priority} /></Table.Td>
       <Table.Td>
         <Badge variant="dot" color={STATUS_COLOR[inc.status]} size="sm">
@@ -92,27 +169,88 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
         </Text>
       </Table.Td>
       <Table.Td style={{ textAlign: 'center' }}>
-        {STATUS_NEXT[inc.status] && (
-          <Tooltip label={`Mark as ${STATUS_NEXT[inc.status]}`}>
+        <Group gap={4} justify="center">
+          <Tooltip label={inc.pinned_at ? 'Unpin' : 'Pin to top'}>
             <ActionIcon
-              variant="light"
+              variant={inc.pinned_at ? 'filled' : 'subtle'}
               size="md"
-              color={STATUS_NEXT[inc.status] === 'dispatched' ? 'blue' : 'green'}
-              onClick={() => handleAdvanceStatus(inc)}
-              loading={updatingId === inc.id}
+              color="orange"
+              loading={pinningId === inc.id}
+              onClick={() => handleTogglePin(inc)}
             >
-              {STATUS_NEXT[inc.status] === 'dispatched'
-                ? <Forward size={15} />
-                : <CheckCircle size={15} />}
+              {inc.pinned_at ? <PinOff size={15} /> : <Pin size={15} />}
             </ActionIcon>
           </Tooltip>
-        )}
+          <Tooltip label={inc.notes ? 'Edit notes' : 'Add notes'}>
+            <ActionIcon
+              variant={inc.notes ? 'filled' : 'subtle'}
+              size="md"
+              color="gray"
+              onClick={() => handleOpenNotes(inc)}
+            >
+              <MessageSquare size={15} />
+            </ActionIcon>
+          </Tooltip>
+          {STATUS_NEXT[inc.status] && (
+            <Tooltip label={`Mark as ${STATUS_NEXT[inc.status]}`}>
+              <ActionIcon
+                variant="light"
+                size="md"
+                color={STATUS_NEXT[inc.status] === 'dispatched' ? 'blue' : 'green'}
+                onClick={() => handleAdvanceStatus(inc)}
+                loading={updatingId === inc.id}
+              >
+                {STATUS_NEXT[inc.status] === 'dispatched'
+                  ? <Forward size={15} />
+                  : <CheckCircle size={15} />}
+              </ActionIcon>
+            </Tooltip>
+          )}
+        </Group>
       </Table.Td>
     </Table.Tr>
   ))
 
   return (
     <Stack gap="md">
+      <Modal opened={opened} onClose={close} title={<Text fw={700}>Resolve incident?</Text>} size="sm" centered>
+        <Text size="sm">
+          Mark this {pendingResolve ? TYPE_LABELS[pendingResolve.type] : ''} incident
+          {pendingResolve?.location ? ` at ${pendingResolve.location}` : ''} as resolved?
+          {" "}<i>This cannot be undone.</i>
+        </Text>
+        <Group justify="flex-end" mt="md">
+          <Button variant="subtle" color="gray" onClick={close}>Cancel</Button>
+          <Button
+            color="green"
+            loading={pendingResolve ? updatingId === pendingResolve.id : false}
+            onClick={handleConfirmResolve}
+          >
+            Resolve
+          </Button>
+        </Group>
+      </Modal>
+
+      <Modal
+        opened={notesOpened}
+        onClose={closeNotes}
+        title={<Text fw={700}>Notes - <Text span>{notesTarget ? TYPE_LABELS[notesTarget.type] : ''}{notesTarget?.location ? ` @ ${notesTarget.location}` : ''}</Text></Text>}
+        size="md"
+        centered
+      >
+        <Textarea
+          placeholder="Add dispatcher notes, follow-up actions, or outcomes…"
+          minRows={5}
+          autosize
+          value={notesText}
+          onChange={e => setNotesText(e.currentTarget.value)}
+        />
+        <Group justify="flex-end" mt="md">
+          <Button variant="subtle" color="gray" onClick={closeNotes}>Cancel</Button>
+          <Button loading={savingNotes} onClick={handleSaveNotes}>Save</Button>
+        </Group>
+      </Modal>
+
       {staleP1.length > 0 && (
         <Alert icon={<AlertOctagon size={16} />} color="red" title={`${staleP1.length} High priority incident${staleP1.length > 1 ? 's' : ''} open for 30+ minutes`}>
           Immediate attention required.
@@ -121,6 +259,15 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
 
       <Group justify="space-between">
         <Group gap="sm">
+          <TextInput
+            placeholder="Search location or description…"
+            size="xs"
+            leftSection={<Search size={13} />}
+            rightSection={search ? <ActionIcon size="xs" variant="subtle" onClick={() => setSearch('')}><X size={12} /></ActionIcon> : null}
+            value={search}
+            onChange={e => setSearch(e.currentTarget.value)}
+            w={220}
+          />
           <Select
             placeholder="All statuses"
             size="xs"
@@ -147,6 +294,12 @@ export function IncidentBoard({ incidents, loading, campusId, onRefresh }: Props
             value={filterPriority}
             onChange={setFilterPriority}
             w={110}
+          />
+          <Switch
+            size="xs"
+            label="Show resolved"
+            checked={showResolved}
+            onChange={e => setShowResolved(e.currentTarget.checked)}
           />
         </Group>
         <Group gap="sm">

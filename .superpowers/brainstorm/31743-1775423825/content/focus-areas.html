@@ -1,0 +1,54 @@
+<h2>What's missing — where should we focus?</h2>
+<p class="subtitle">Select the areas you want to tackle. I'll design a plan around your priorities.</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="inline-editing" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Inline Editing on the Board</h3>
+      <p>After saving an incident, dispatchers can only advance its status. They can't fix a wrong type, priority, location, or people-involved without deleting and re-creating it. The board needs in-place editing for those fields.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="search-filter" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Text Search + Better Filtering</h3>
+      <p>The board only has dropdown filters (status / type / priority). There's no way to search descriptions, filter by date range, or sort columns. Hard to find a specific incident in a busy shift.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="heatmap-2d" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>2D Hour × Day Heatmap</h3>
+      <p>The backend already returns hour + day-of-week data. The UI only shows a 1D bar chart (total by hour). A full grid would reveal patterns like "Friday nights at 11pm are dangerous" that the bar chart hides.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="incident-detail" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Incident Detail View / Drill-Down</h3>
+      <p>Clicking a row on the board does nothing. There's no way to see the full raw description, AI rationale, pattern flag detail, audit trail, or full history of changes for a single incident.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="error-handling" onclick="toggleSelect(this)">
+    <div class="letter">E</div>
+    <div class="content">
+      <h3>Backend Robustness</h3>
+      <p>AI calls (classify + digest) silently swallow rate limit errors, auth failures, and timeouts — they log an empty string and the frontend shows a generic error. Pagination is also missing: all incidents load at once.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="date-polish" onclick="toggleSelect(this)">
+    <div class="letter">F</div>
+    <div class="content">
+      <h3>UX Polish</h3>
+      <p>Small but impactful: timestamps only show HH:MM (yesterday's incidents look current), the stale-P1 banner never auto-dismisses, export has no feedback, and the pattern flag uses an emoji instead of a proper icon.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Select one or more, then let me know in the terminal.</p>

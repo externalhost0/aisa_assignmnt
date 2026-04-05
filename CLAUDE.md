@@ -84,7 +84,7 @@ frontend/src/
 ├── hooks/useIncidents.ts # 30s polling hook
 └── components/
     ├── IncidentForm.tsx      # Two-step flow: Analyze → editable preview → Save
-    ├── IncidentBoard.tsx     # Filterable table, status transitions, stale-P1 alert
+    ├── IncidentBoard.tsx     # Filterable/searchable table, status transitions, stale-P1 alert
     ├── AnalyticsPanel.tsx    # Hotspot list, hourly bar chart, AI digest card
     └── PriorityBadge.tsx     # Color-coded P1/P2/P3 badge
 ```

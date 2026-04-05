@@ -23,6 +23,9 @@ export interface Incident {
   people_involved: string | null
   status: Status
   pattern_flag: string | null
+  notes: string | null
+  pinned_at: string | null
+  ai_classification_raw: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }

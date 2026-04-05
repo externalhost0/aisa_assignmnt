@@ -24,7 +24,7 @@ export const api = {
   createIncident: (body: Omit<Incident, 'id' | 'created_at' | 'updated_at'>) =>
     http.post<Incident>('/incidents', body).then(r => r.data),
 
-  updateIncident: (id: number, patch: Partial<Pick<Incident, 'status' | 'priority' | 'location' | 'type' | 'people_involved'>>) =>
+  updateIncident: (id: number, patch: Partial<Pick<Incident, 'status' | 'priority' | 'location' | 'type' | 'people_involved' | 'notes'>> & { pinned?: boolean }) =>
     http.patch<Incident>(`/incidents/${id}`, patch).then(r => r.data),
 
   exportIncidents: (params: Record<string, string | number>) => {
