@@ -10,8 +10,8 @@ An AI-augmented incident management dashboard for university campus safety teams
 
 **Solution:** A three-panel web app:
 
-1. **Intelligent Intake** — dispatcher types a freeform description; Claude classifies it, assigns priority (P1–P3) with a rationale, extracts location and people involved, and flags if it resembles a recent cluster.
-2. **Live Incident Board** — filterable, searchable table (location and description) sorted by priority, with one-click status transitions (open → dispatched → resolved), a stale-P1 alert banner, and CSV export.
+1. **Intelligent Intake** — dispatcher types a freeform description; Claude classifies it, assigns severity (High/Medium/Low) with a rationale, extracts location and people involved, and flags if it resembles a recent cluster.
+2. **Live Incident Board** — filterable, searchable table (location and description) sorted by severity, with one-click status transitions (open → dispatched → resolved), a stale-High alert banner, and CSV export.
 3. **Analytics** — hot-spot locations, incidents-by-hour bar chart, and an on-demand AI shift digest for handoff notes.
 
 Every AI output is editable by the dispatcher before saving. The AI drafts; the human decides.
@@ -75,7 +75,7 @@ asia_proj1/
 │   │       ├── IncidentForm.tsx      # Analyze → preview → save
 │   │       ├── IncidentBoard.tsx     # Table + filters + status controls
 │   │       ├── AnalyticsPanel.tsx    # Charts + digest
-│   │       └── PriorityBadge.tsx     # P1/P2/P3 badge
+│   │       └── PriorityBadge.tsx     # High/Medium/Low severity badge
 │   ├── vite.config.ts
 │   └── package.json
 ├── .gitignore
@@ -126,7 +126,7 @@ No frontend env vars needed in development.
 
 | Trigger | Endpoint | What Claude does |
 |---|---|---|
-| Dispatcher clicks "Analyze" | `POST /classify` | Extracts type, priority + rationale, location, people; compares to last 48h for pattern flag |
+| Dispatcher clicks "Analyze" | `POST /classify` | Extracts type, severity (High/Medium/Low) + rationale, location, people; compares to last 48h for pattern flag |
 | "Generate Digest" button | `POST /digest` | Summarizes last 12h of incidents into plain-English handoff notes |
 | Analytics page load | `GET /analytics/*` | Pure SQL aggregation — no AI in the read path |
 
@@ -137,7 +137,7 @@ Every Claude call is logged to `AIAuditLog` (input, output, model, timestamp) fo
 ## Multi-Campus Design
 
 - Every `Incident` row has a `campus_id` FK — a single deployment serves multiple campuses without data bleed.
-- Each `Campus` stores its own category list and priority rule descriptions in a JSON settings column.
+- Each `Campus` stores its own category list and severity rule descriptions in a JSON settings column.
 - Adding a new campus is one `POST /campuses` call; the frontend campus selector updates automatically.
 
 ---

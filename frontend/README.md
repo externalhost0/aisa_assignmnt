@@ -34,9 +34,9 @@ src/
 ├── hooks/useIncidents.ts     # Fetches incidents, polls every 30s
 └── components/
     ├── IncidentForm.tsx       # Freeform input → AI analysis preview → save
-    ├── IncidentBoard.tsx      # Filterable table, status transitions, stale-P1 alert
+    ├── IncidentBoard.tsx      # Filterable table, status transitions, stale-High alert
     ├── AnalyticsPanel.tsx     # Hotspot list, hourly bar chart, AI digest
-    └── PriorityBadge.tsx      # Color-coded P1/P2/P3 chip
+    └── PriorityBadge.tsx      # Color-coded High/Medium/Low chip
 ```
 
 ## Intake Flow
@@ -44,7 +44,7 @@ src/
 The intake is intentionally two-step to keep the dispatcher in the loop:
 
 1. Type description → click **Analyze with AI** → calls `POST /api/classify`
-2. AI result appears as an editable preview (type, priority, location, people)
+2. AI result appears as an editable preview (type, severity, location, people)
 3. Dispatcher reviews, edits if needed → click **Save Incident** → calls `POST /api/incidents`
 4. Board refreshes; tab switches to the board automatically
 

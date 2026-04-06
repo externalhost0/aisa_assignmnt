@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Campus safety incident management dashboard. Dispatchers submit freeform incident descriptions; Claude classifies them, assigns priority (P1–P3), and flags patterns across recent incidents. See `README.md` for full architecture.
+Campus safety incident management dashboard. Dispatchers submit freeform incident descriptions; Claude classifies them, assigns severity (High/Medium/Low), and flags patterns across recent incidents. See `README.md` for full architecture.
 
 ## Commands
 
@@ -84,9 +84,9 @@ frontend/src/
 ├── hooks/useIncidents.ts # 30s polling hook
 └── components/
     ├── IncidentForm.tsx      # Two-step flow: Analyze → editable preview → Save
-    ├── IncidentBoard.tsx     # Filterable/searchable table, status transitions, stale-P1 alert
+    ├── IncidentBoard.tsx     # Filterable/searchable table, status transitions, stale-High alert
     ├── AnalyticsPanel.tsx    # Hotspot list, hourly bar chart, AI digest card
-    └── PriorityBadge.tsx     # Color-coded P1/P2/P3 badge
+    └── PriorityBadge.tsx     # Color-coded High/Medium/Low badge
 ```
 
 The intake flow is intentionally two-step: "Analyze" calls `/api/classify` and shows an editable preview; "Save" then calls `/api/incidents`. The AI result is never auto-saved.

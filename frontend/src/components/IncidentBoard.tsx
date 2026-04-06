@@ -15,7 +15,7 @@ import {
 	Switch,
 	Modal,
 	Textarea,
-	TextInput,
+	TextInput
 } from "@mantine/core";
 import { Search, X } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
